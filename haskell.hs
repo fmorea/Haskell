@@ -159,6 +159,37 @@ conCatHelper acc [] (x:xs) = conCatHelper (x:acc) [] xs
 myconcat :: [[a]] -> [a]
 myconcat = iterator conCat
 
+-- fare operazioni tra liste "incolonnate"
+-- esempio 
+-- inColumn (+) [1..5] $ inColumn (+) [4,3,2,1,0] [1,1,1,1,1]
+-- [6,6,6,6,6]
+inColumn ::(Ord a, Num a) => (a -> a -> a)-> [a] -> [a] -> [a]
+inColumn _ [] _ = []
+inColumn _ _ [] = []
+inColumn f (a:as) (b:bs) = (f a b):(inColumn f as bs)
+
+sumInColumn :: (Ord a, Num a) => [a]->[a]->[a]
+sumInColumn = inColumn (+)
+
+maxList :: (Ord a, Num a) => [a] -> (a , Int)
+maxList = maxHelper [] 0 0
+
+maxHelper :: (Ord a, Num a) => [a]->Int -> Int -> [a] -> (a, Int)
+maxHelper [] _ _ [] = error "invalid input"
+maxHelper [acc] indM i [] = (acc, indM)
+maxHelper [] 0 0 (x:xs) = maxHelper [x] 1 1 xs
+maxHelper [old] indM ind (x:xs) 
+ | old >= x = maxHelper [old] indM (ind + 1) xs
+ | True = maxHelper [x] (ind + 1) (ind + 1) xs
+
+--  bilist_max $ Bilist [1..5] [2..6]
+bilist_max ::  (Ord a, Num a) => Bilist a -> Int
+bilist_max b = (\(x,y) ->y) $ maxList $ sumInColumn (x b) (y b)
+
+
+
+ 
+
 
 
 
