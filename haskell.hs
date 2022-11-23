@@ -297,3 +297,15 @@ ex = runStateM
      (do x <- return 5
          return (x+1))
      333
+
+ex_ = runStateM
+     (do x <- getState
+         return (x+1))
+     333
+
+ex__ = runStateM
+     (do x <- getState
+         putState (x+1)
+         x <- getState
+         return x)
+     333
