@@ -48,19 +48,19 @@ lookUp _ []       = Nothing
 lookUp 1 (x : _)  = Just x
 lookUp i (_ : xs) = lookUp (i - 1) xs
 
--- unjust with outofbound control
-unjust :: Maybe a -> a
-unjust (Just x) = x
-unjust Nothing = error "OutOfBound Exception" 
+-- fromJust with outofbound control
+fromJust :: Maybe a -> a
+fromJust (Just x) = x
+fromJust Nothing = error "NullPointerException" 
 
 -- let's assemble into one function
 -- *MAIN> [1,3,4,5,11,24] .* 4
 -- 5
 (.*) :: [a] -> Int -> a
-(.*) list index = (unjust (lookUp index list)) 
+(.*) list index = (fromJust (lookUp index list)) 
 
 -- take the i-th element from each list
-bilist_ref i b = (unjust (lookUp i (x b)) , unjust (lookUp i (y b)))
+bilist_ref i b = (fromJust (lookUp i (x b)) , fromJust (lookUp i (y b)))
 
 -- lenght of a list
 lenght :: [a] -> Int
@@ -253,9 +253,6 @@ instance Show a => Show (BTree a) where
   ++ " " ++ show r ++ "]"
 
 
-instance Functor BTree where
- fmap = btmap
-
 inFtree n = BNode n child child
  where child = inFtree $ n+1
 
@@ -309,3 +306,70 @@ ex__ = runStateM
          x <- getState
          return x)
      333
+     
+increment :: (Functor f, Num b) => f b -> f b
+increment = fmap (+1)
+
+-- *MAIN> BuildList 1 $ BuildList 2 $ BuildList 3 $ End
+-- [1->[2->[3]]]
+data LinkedList a = End | BuildList{ car :: a, cdr :: LinkedList a}  deriving Eq
+
+instance Show a => Show (LinkedList a) where 
+ show End = "[]"
+ show (BuildList x End) = "[" ++ show x ++ "]"
+ show (BuildList x y) = "[" ++ show x ++ "->" ++ show y ++"]"
+ 
+toLinkedList :: [a] -> LinkedList a
+toLinkedList [] = End
+toLinkedList (x:xs) = BuildList x $ toLinkedList xs
+
+instance Functor LinkedList where
+ fmap _ End = End
+ fmap f (BuildList x xs) = BuildList (f x) (fmap f xs)
+ 
+instance Applicative LinkedList where
+  -- [(+1) (+1) (+1) (+1) (+1) ... 
+  pure x = BuildList x (pure x)
+  End <*> _ = End
+  _ <*> End = End
+  BuildList f fs <*> BuildList x xs = BuildList (f x) (fs <*> xs)
+  
+-- *MAIN> pure (+1) <*> toLinkedList [1,2,3]
+-- [2->[3->[4]]]
+
+btfoldr :: (a->b->b)->b-> BTree a -> b
+btfoldr _ acc BEmpty = acc
+btfoldr f acc (BNode x l r) =
+ f x (btfoldr f (btfoldr f acc r) l)
+
+instance Foldable BTree where
+ foldr = btfoldr
+
+instance Functor BTree where
+ fmap = btmap
+
+instance Applicative BTree where
+ pure x = BNode x (pure x) (pure x)
+ BEmpty <*> _ = BEmpty
+ _ <*> BEmpty = BEmpty
+ BNode f fs1 fs2 <*> BNode x xs1 xs2 = BNode (f x) (fs1 <*> xs1) (fs2 <*> xs2)
+ 
+ btcat BEmpty t = t
+ btcat t1@(BNode x l r) t2 = BNode x l new_r
+  where new_r = case r of
+                BEmpty -> t2
+                _ -> btcat r t2
+   
+ btconcat = foldr btcat BEmpty t
+ 
+ btConcatMap :: (a -> BTree b) -> BTree a -> Btree b
+ btConcatMap f t = btconcat $ fmap f t
+ 
+ instance Applicative Btree where 
+ pure x = bleaf x
+ fs <*> xs = btConcatMap (\f -> fmap f xs) fs
+ 
+
+  
+     
+
