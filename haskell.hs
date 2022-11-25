@@ -354,20 +354,28 @@ instance Applicative BTree where
  _ <*> BEmpty = BEmpty
  BNode f fs1 fs2 <*> BNode x xs1 xs2 = BNode (f x) (fs1 <*> xs1) (fs2 <*> xs2)
  
- btcat BEmpty t = t
- btcat t1@(BNode x l r) t2 = BNode x l new_r
-  where new_r = case r of
-                BEmpty -> t2
-                _ -> btcat r t2
+ --btcat BEmpty t = t
+ --btcat t1@(BNode x l r) t2 = BNode x l new_r
+  --where new_r = case r of
+    --            BEmpty -> t2
+    --            _ -> btcat r t2
    
- btconcat = foldr btcat BEmpty t
+ -- btconcat = foldr btcat BEmpty t
  
- btConcatMap :: (a -> BTree b) -> BTree a -> Btree b
- btConcatMap f t = btconcat $ fmap f t
+ -- btConcatMap :: (a -> BTree b) -> BTree a -> BTree b
+ -- btConcatMap f t = btconcat $ fmap f t
  
- instance Applicative Btree where 
- pure x = bleaf x
- fs <*> xs = btConcatMap (\f -> fmap f xs) fs
+ -- instance Applicative Btree where 
+ -- pure x = bleaf x
+ -- fs <*> xs = btConcatMap (\f -> fmap f xs) fs
+ 
+apply42 :: (Ord a, Num a) => (p -> a) -> p -> Maybe a
+apply42 f x = let s = f x
+              in if s > 42
+                 then Just s
+                 else Nothing
+-- apply42 (\x -> x-6) 62
+-- Just 56
  
 
   
