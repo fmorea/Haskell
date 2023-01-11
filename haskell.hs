@@ -1,9 +1,13 @@
 -- my journey into haskell
 module MAIN where
 import Prelude 
--- to compile in ghci do:
+-- to try in ghci do:
 -- :l namefile.hs
 -- then you can use the function defined here
+
+-- to compile and run instead the main is needed
+main :: IO ()    -- This says that main is an IO action.
+main = return () -- This tells main to do nothing.
 
 fun :: Int -> Int
 fun x = x+1
